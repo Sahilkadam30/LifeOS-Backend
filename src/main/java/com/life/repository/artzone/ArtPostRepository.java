@@ -10,4 +10,6 @@ import com.life.entity.artzone.ArtPost;
 @Repository
 public interface ArtPostRepository extends JpaRepository<ArtPost, Long> {
 	List<ArtPost> findByUsernameOrderByCreatedAtDesc(String username);
+	List<ArtPost> findAllByOrderByCreatedAtDesc();
+	List<ArtPost> findByIsPublicTrueOrderByCreatedAtDesc();
 }

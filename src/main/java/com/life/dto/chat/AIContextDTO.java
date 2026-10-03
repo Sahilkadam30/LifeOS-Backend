@@ -8,6 +8,8 @@ public class AIContextDTO {
 
     private String studyContext;
 
+    private String musicContext;
+
 	public String getFinanceContext() {
 		return financeContext;
 	}
@@ -30,5 +32,13 @@ public class AIContextDTO {
 
 	public void setStudyContext(String studyContext) {
 		this.studyContext = studyContext;
+	}
+
+	public String getMusicContext() {
+		return musicContext;
+	}
+
+	public void setMusicContext(String musicContext) {
+		this.musicContext = musicContext;
 	}
 }

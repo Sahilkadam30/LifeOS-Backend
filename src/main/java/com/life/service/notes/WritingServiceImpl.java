@@ -7,15 +7,18 @@ import org.springframework.stereotype.Service;
 import com.life.dto.WritingRequest;
 import com.life.entity.notes.Writing;
 import com.life.entity.notes.WritingType;
+import com.life.repository.UserRepository;
 import com.life.repository.notes.WritingRepository;
 
 @Service
 public class WritingServiceImpl implements WritingService{
 
 	private final WritingRepository writingRepository;
+    private final UserRepository userRepository;
 
-    public WritingServiceImpl(WritingRepository writingRepository) {
+    public WritingServiceImpl(WritingRepository writingRepository, UserRepository userRepository) {
         this.writingRepository = writingRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -25,10 +28,16 @@ public class WritingServiceImpl implements WritingService{
 
         writing.setTitle(request.getTitle());
         writing.setContent(request.getContent());
-        writing.setType(request.getType());
+        writing.setType(request.getType() != null ? request.getType() : WritingType.NOTE);
         writing.setCardColor(request.getCardColor());
         writing.setFavorite(request.isFavorite());
         writing.setUserId(userId);
+
+        if (userId != null) {
+            userRepository.findById(userId).ifPresent(user -> {
+                writing.setUsername(user.getUsername());
+            });
+        }
 
         return writingRepository.save(writing);
     }

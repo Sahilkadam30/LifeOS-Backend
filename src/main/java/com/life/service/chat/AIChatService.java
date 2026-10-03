@@ -1,5 +1,7 @@
 package com.life.service.chat;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -14,6 +16,7 @@ import com.life.prompt.FinancePromptBuilder;
 import com.life.prompt.GoalPromptBuilder;
 import com.life.prompt.InvestmentPromptBuilder;
 import com.life.prompt.MealPromptBuilder;
+import com.life.prompt.MusicPromptBuilder;
 import com.life.prompt.StudyPromptBuilder;
 import com.life.prompt.TravelPromptBuilder;
 
@@ -59,13 +62,27 @@ public class AIChatService {
     @Autowired
     private MealPromptBuilder mealPromptBuilder;
 
+    @Autowired
+    private AIMusicAdvisorService musicService;
+
+    @Autowired
+    private MusicPromptBuilder musicPromptBuilder;
+
     public String askGemini(String userQuestion,Long userId) {
 
         String url =
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="
                         + apiKey;
-        
+
         RestTemplate restTemplate = new RestTemplate();
+
+        // Always inject the real current date/time so Gemini never guesses
+        LocalDateTime now = LocalDateTime.now();
+        String currentDateContext =
+                "[SYSTEM CONTEXT]\n" +
+                "Current Date : " + now.format(DateTimeFormatter.ofPattern("EEEE, MMMM dd, yyyy")) + "\n" +
+                "Current Time : " + now.format(DateTimeFormatter.ofPattern("hh:mm a")) + "\n" +
+                "[END SYSTEM CONTEXT]\n\n";
 
         String intent = detectIntent(userQuestion);
 
@@ -77,7 +94,7 @@ public class AIChatService {
                     investmentService
                             .buildInvestmentContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     investmentPromptBuilder
                             .buildInvestmentPrompt(
                                     investmentContext,
@@ -89,7 +106,7 @@ public class AIChatService {
             String mealContext =
                     mealService.buildMealContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     mealPromptBuilder.buildMealPrompt(
                             mealContext,
                             userQuestion
@@ -100,7 +117,7 @@ public class AIChatService {
             String travelContext =
                     travelService.buildTravelContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     travelPromptBuilder.buildTravelPrompt(
                             travelContext,
                             userQuestion
@@ -111,7 +128,7 @@ public class AIChatService {
             String financeContext =
                     financeService.buildFinanceContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     financePromptBuilder.buildFinancePrompt(
                             financeContext,
                             userQuestion
@@ -122,7 +139,7 @@ public class AIChatService {
             String studyContext =
                     studyService.buildStudyContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     studyPromptBuilder.buildStudyPrompt(
                             studyContext,
                             userQuestion
@@ -133,19 +150,35 @@ public class AIChatService {
             String goalContext =
                     goalService.buildGoalContext(userId);
 
-            prompt =
+            prompt = currentDateContext +
                     goalPromptBuilder.buildGoalPrompt(
                             goalContext,
                             userQuestion
                     );
         }
+        else if("MUSIC".equals(intent)) {
+
+            String musicContext =
+                    musicService.buildMusicContext(userId);
+
+            prompt = currentDateContext +
+                    musicPromptBuilder.buildMusicPrompt(
+                            musicContext,
+                            userQuestion
+                    );
+        }
         else {
 
-            prompt =
+            prompt = currentDateContext +
                     """
                     You are LifeOS AI Assistant.
 
-                    Answer briefly and helpfully.
+                    Answer briefly, helpfully, and clearly.
+
+                    Rules:
+                    - Do not use ** (double asterisks) anywhere in the response. No markdown bold symbols.
+                    - Maintain a separate new line for each point or list item. Never put multiple points on the same line.
+                    - Use clean bullet points (• or -) or numbered lists (1., 2.), each starting on its own line.
 
                     User Question:
                     """
@@ -225,10 +258,26 @@ public class AIChatService {
 
         List<Map<String, Object>> parts =
                 (List<Map<String, Object>>) content.get("parts");
-        
-        
 
-        return (String) parts.get(0).get("text");
+        String rawResponse = (String) parts.get(0).get("text");
+        return cleanAndFormatResponse(rawResponse);
+    }
+
+    public static String cleanAndFormatResponse(String text) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+
+        // 1. Strip out markdown bold (**) symbols
+        String cleaned = text.replace("**", "");
+
+        // 2. Put bullet points placed inline (e.g. "include: * Point 1 * Point 2") onto new lines
+        cleaned = cleaned.replaceAll("(?<!\\n)\\s*\\*\\s+", "\n• ");
+
+        // 3. Convert any starting asterisk bullets at the beginning of a line to clean bullet dots
+        cleaned = cleaned.replaceAll("(?m)^\\*\\s+", "• ");
+
+        return cleaned.trim();
     }
     
     private String detectIntent(String question) {
@@ -286,11 +335,43 @@ public class AIChatService {
         }
 
         if (q.contains("goal")
+                || q.contains("milestone")
+                || q.contains("target")
+                || q.contains("roadmap")
+                || q.contains("ambition")
+                || q.contains("resolution")
+                || q.contains("achievement")
                 || q.contains("motivation")
                 || q.contains("habit")
                 || q.contains("discipline")) {
 
             return "GOAL";
+        }
+
+        if (q.contains("music")
+                || q.contains("song")
+                || q.contains("singing")
+                || q.contains("vocal")
+                || q.contains("recording")
+                || q.contains("record")
+                || q.contains("audio")
+                || q.contains("track")
+                || q.contains("practice")
+                || q.contains("instrument")
+                || q.contains("guitar")
+                || q.contains("piano")
+                || q.contains("keyboard")
+                || q.contains("drums")
+                || q.contains("flute")
+                || q.contains("violin")
+                || q.contains("beat")
+                || q.contains("melody")
+                || q.contains("chord")
+                || q.contains("lyrics")
+                || q.contains("album")
+                || q.contains("studio")) {
+
+            return "MUSIC";
         }
 
         return "GENERAL";

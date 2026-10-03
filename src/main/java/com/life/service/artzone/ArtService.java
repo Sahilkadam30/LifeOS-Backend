@@ -26,18 +26,32 @@ public class ArtService {
     @Autowired
     private PostLikeRepository likeRepo;
 
-    public ArtPost createPost(String username, MultipartFile file, String caption) throws Exception {
+    public ArtPost createPost(String username, MultipartFile file, String caption, boolean isPublic) throws Exception {
         ArtPost post = new ArtPost();
         post.setUsername(username);
         post.setCaption(caption);
         post.setImage(file.getBytes());
         post.setCreatedAt(LocalDateTime.now());
         post.setLikes(0);
+        post.setPublic(isPublic);
         return repo.save(post);
     }
 
     public List<ArtPost> getPosts(String username) {
         return repo.findByUsernameOrderByCreatedAtDesc(username);
+    }
+
+    public List<ArtPost> getPublicPosts() {
+        return repo.findByIsPublicTrueOrderByCreatedAtDesc();
+    }
+
+    public ArtPost toggleVisibility(Long postId, String username) {
+        ArtPost post = repo.findById(postId).orElseThrow(() -> new RuntimeException("Post not found"));
+        if (!post.getUsername().equals(username)) {
+            throw new RuntimeException("Not authorized");
+        }
+        post.setPublic(!post.isPublic());
+        return repo.save(post);
     }
 
     public void likePost(Long postId) {

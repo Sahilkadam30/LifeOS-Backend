@@ -33,8 +33,8 @@ public class JwtFilter extends OncePerRequestFilter {
                                    FilterChain filterChain)
             throws ServletException, IOException {
 
-        // ✅ Allow WebSocket
-        if (request.getRequestURI().startsWith("/ws")) {
+        // ✅ Allow WebSocket & SockJS info
+        if (request.getRequestURI().startsWith("/ws") || request.getRequestURI().startsWith("/api/ws") || request.getRequestURI().startsWith("/api/info")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -45,13 +45,30 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
+        String token = null;
         String authHeader = request.getHeader("Authorization");
 
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7).trim();
+        } else if (request.getParameter("token") != null) {
+            token = request.getParameter("token").trim();
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7).trim();
+            }
+        }
+
+        if (token != null) {
+            token = token.trim();
+            if (token.startsWith("\"") && token.endsWith("\"") && token.length() > 2) {
+                token = token.substring(1, token.length() - 1).trim();
+            }
+            if (token.isEmpty() || "null".equalsIgnoreCase(token) || "undefined".equalsIgnoreCase(token)) {
+                token = null;
+            }
+        }
+
         try {
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-
-                String token = authHeader.substring(7);
-
+            if (token != null) {
                 String username = jwtUtil.extractUsername(token);
 
                 if (username != null &&
@@ -80,10 +97,17 @@ public class JwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
 
         } catch (ExpiredJwtException e) {
+            String uri = request.getRequestURI();
+            if (uri != null && (uri.contains("/stream") || uri.contains("/download") || uri.startsWith("/api/music/"))) {
+                filterChain.doFilter(request, response);
+                return;
+            }
 
             // 🔥 THIS IS THE KEY FIX
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Token expired");
+        } catch (Exception e) {
+            filterChain.doFilter(request, response);
         }
     }
 }

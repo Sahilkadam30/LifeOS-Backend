@@ -12,4 +12,6 @@ public interface WritingRepository extends JpaRepository<Writing, Long> {
     List<Writing> findByUserId(Long userId);
 
     List<Writing> findByUserIdAndType(Long userId, WritingType type);
+
+    List<Writing> findByTypeOrderByCreatedAtDesc(WritingType type);
 }

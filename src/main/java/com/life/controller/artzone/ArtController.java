@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,14 +36,25 @@ public class ArtController {
     public ResponseEntity<?> createPost(
             @RequestParam("file") MultipartFile file,
             @RequestParam("caption") String caption,
+            @RequestParam(value = "isPublic", defaultValue = "false") boolean isPublic,
             Principal principal
     ) throws Exception {
-        return ResponseEntity.ok(service.createPost(principal.getName(), file, caption));
+        return ResponseEntity.ok(service.createPost(principal.getName(), file, caption, isPublic));
     }
 
     @GetMapping("/posts")
     public ResponseEntity<?> getPosts(Principal principal) {
         return ResponseEntity.ok(service.getPosts(principal.getName()));
+    }
+
+    @PutMapping("/toggle-visibility/{id}")
+    public ResponseEntity<?> toggleVisibility(@PathVariable Long id, Principal principal) {
+        try {
+            ArtPost updated = service.toggleVisibility(id, principal.getName());
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 
     @PostMapping("/like/{id}")

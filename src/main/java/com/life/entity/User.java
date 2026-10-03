@@ -21,6 +21,9 @@ public class User {
     @Column(unique = true)
     private String email;
     private String password;
+
+    @Column(name = "journal_defaults_seeded")
+    private Boolean journalDefaultsSeeded = false;
     
 	public User() {
 
@@ -92,5 +95,13 @@ public class User {
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public Boolean getJournalDefaultsSeeded() {
+		return journalDefaultsSeeded;
+	}
+
+	public void setJournalDefaultsSeeded(Boolean journalDefaultsSeeded) {
+		this.journalDefaultsSeeded = journalDefaultsSeeded;
 	}
 }

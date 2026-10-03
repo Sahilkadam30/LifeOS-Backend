@@ -28,6 +28,8 @@ public class ArtPost {
 
     private int likes;
 
+    private boolean isPublic = false;
+
 	public Long getId() {
 		return id;
 	}
@@ -74,5 +76,13 @@ public class ArtPost {
 
 	public void setLikes(int likes) {
 		this.likes = likes;
+	}
+
+	public boolean isPublic() {
+		return isPublic;
+	}
+
+	public void setPublic(boolean isPublic) {
+		this.isPublic = isPublic;
 	}
 }

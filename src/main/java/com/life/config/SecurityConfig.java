@@ -35,9 +35,13 @@ public class SecurityConfig {
             	    .requestMatchers("/api/finance/**").permitAll()
             	    .requestMatchers("/api/planner/**").permitAll()
             	    .requestMatchers("/api/skills/**").permitAll()
-            	    .requestMatchers("/api/chat/**").authenticated()
-            	    .requestMatchers("/ws/**").permitAll()
+            	    .requestMatchers("/api/goals/**").permitAll()
+            	    .requestMatchers("/api/music/**").permitAll()
+            	    .requestMatchers("/api/info", "/api/info/**", "/api/ws/**", "/ws", "/ws/**").permitAll()
             	    .requestMatchers("/uploads/**").permitAll()
+            	    .requestMatchers("/api/connect/**").permitAll()
+            	    .requestMatchers("/error", "/error/**").permitAll()
+            	    .requestMatchers("/api/chat/**").authenticated()
             	    .anyRequest().authenticated()
             	)
 
@@ -50,13 +54,12 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // ✅ ADD THIS METHOD
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
         config.setAllowedOriginPatterns(List.of("*"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

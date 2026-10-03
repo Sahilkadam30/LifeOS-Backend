@@ -29,13 +29,18 @@ public class SectionService {
 
         existing.setTitle(section.getTitle());
         existing.setDescription(section.getDescription());
+        if (section.getColor() != null) {
+            existing.setColor(section.getColor());
+        }
 
         existing.getPlaces().clear();
 
-        section.getPlaces().forEach(place -> {
-            place.setSection(existing);
-            existing.getPlaces().add(place);
-        });
+        if (section.getPlaces() != null) {
+            section.getPlaces().forEach(place -> {
+                place.setSection(existing);
+                existing.getPlaces().add(place);
+            });
+        }
 
         return repository.save(existing);
     }
